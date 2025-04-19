@@ -4,24 +4,28 @@ using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Đọc chuỗi kết nối từ appsettings.json
-var connectionString = builder.Configuration.GetConnectionString("con");
+// Đọc chuỗi kết nối từ biến môi trường hoặc appsettings.json
+var connectionString = builder.Configuration.GetConnectionString("con")
+    ?? Environment.GetEnvironmentVariable("ConnectionStrings__con");
 
 // Đăng ký DbContext với SQL Server
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddSignalR();
 
+// Đọc URL frontend từ biến môi trường hoặc mặc định là localhost
+var frontendUrl = builder.Configuration["FrontendUrl"] ?? "http://localhost:4200";
+
 // Cấu hình CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowSpecificOrigin", // 👈 Đổi tên policy để phân biệt
+    options.AddPolicy("AllowSpecificOrigin",
         policy =>
         {
-            policy.WithOrigins("http://localhost:4200") // 👈 Cụ thể frontend URL của bạn
+            policy.WithOrigins(frontendUrl)
                   .AllowAnyMethod()
                   .AllowAnyHeader()
-                  .AllowCredentials(); // 👈 Cho phép credentials như cookie hoặc token
+                  .AllowCredentials();
         });
 });
 
@@ -32,13 +36,20 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // Sử dụng CORS trước các middleware khác
-app.UseCors("AllowSpecificOrigin"); // 👈 Áp dụng policy mới
+app.UseCors("AllowSpecificOrigin");
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+// Tạm thời bật Swagger trong Production để kiểm tra (tùy chọn, xóa nếu không cần)
+else
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
 app.UseStaticFiles();
 
 // Thêm đường dẫn cho SignalR Hub
@@ -47,4 +58,6 @@ app.MapHub<OrderHub>("/orderHub");
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+
+// Cấu hình Kestrel để sử dụng cổng từ biến môi trường PORT
 app.Run();
