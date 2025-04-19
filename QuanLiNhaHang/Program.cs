@@ -19,15 +19,16 @@ var frontendUrl = builder.Configuration["FrontendUrl"] ?? "http://localhost:4200
 // Cấu hình CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowSpecificOrigin",
-        policy =>
-        {
-            policy.WithOrigins(frontendUrl)
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials();
-        });
+    options.AddPolicy("AllowAllOrigins", policy =>
+    {
+        policy
+            .SetIsOriginAllowed(_ => true) // Cho phép tất cả domain
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials(); // Cần thiết nếu dùng SignalR với WebSocket
+    });
 });
+
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
