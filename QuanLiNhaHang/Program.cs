@@ -37,8 +37,7 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // Sử dụng CORS trước các middleware khác
-app.UseCors("AllowSpecificOrigin");
-
+app.UseCors("AllowAllOrigins");
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
